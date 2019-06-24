@@ -72,6 +72,9 @@ def order(request):
         user id duoc tinh khi client gui request bang ajax VN-thoigianhientaicuahethong
 
     """
+    ship_form = ShipForm()
+
+    countries = Country.objects.all()
 
     products = Product.objects.all()
 
@@ -80,6 +83,8 @@ def order(request):
     context = {
         'products': products,
         'segments': segments,
+        'countries': countries,
+        'ship_form': ship_form,
     }
     return render(request, 'minor_app/order.html', context=context)
 
