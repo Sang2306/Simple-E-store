@@ -73,19 +73,13 @@ def order(request):
 
     """
 
-    ship_form = ShipForm()
-
-    countries = Country.objects.all()
-
     products = Product.objects.all()
 
     segments = Segment.objects.all()
 
     context = {
         'products': products,
-        'countries': countries,
         'segments': segments,
-        'ship_form': ship_form,
     }
     return render(request, 'minor_app/order.html', context=context)
 
@@ -139,6 +133,16 @@ def ordered(request):
         )
 
     return HttpResponseRedirect(reverse_lazy('minor_app:order'))
+
+
+def cart(request):
+    ship_form = ShipForm()
+    countries = Country.objects.all()
+    context = {
+        'countries': countries,
+        'ship_form': ship_form,
+    }
+    return render(request, 'minor_app/cart.html', context=context)
 
 
 def load_states(request):
