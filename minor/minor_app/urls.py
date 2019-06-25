@@ -13,5 +13,4 @@ urlpatterns = [
     path('order/load_cities/', views.load_cities, name='load_cities'),
     path('order/load_delivery_date/', views.load_delivery_date, name='load_delivery_date'),
     path('product/load_sub_categories/', views.load_sub_categories, name='load_sub_categories'),
-    path('cart/', views.cart, name='cart'),
 ]

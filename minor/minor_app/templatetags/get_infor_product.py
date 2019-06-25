@@ -1,5 +1,5 @@
 from django.template import Library
-from ..models import SubCategory, Category, Product_Order
+from ..models import SubCategory, Category, Product_Order, Product
 
 register = Library()
 
@@ -11,19 +11,22 @@ def get_product_id(product):
 
 @register.filter
 def get_product_name(product):
-    return product['product_name']
+    name = Product.objects.get(pk=get_product_id(product)).product_name
+    return name
 
 
 @register.filter
 def get_product_price(product):
-    return product['price']
+    product = Product.objects.get(pk=get_product_id(product))
+    return product.price
 
 
 @register.filter
 def get_product_category(product):
     category = ""
     try:
-        category = Category.objects.get(pk=product['category_id'])
+        category_id = Product.objects.get(pk=get_product_id(product)).category_id
+        category = Category.objects.get(p=category_id).category_name
     except Exception:
         pass
     return category
@@ -33,18 +36,18 @@ def get_product_category(product):
 def get_product_sub_category(product):
     subcate = ""
     try:
-        subcate = SubCategory.objects.get(pk=product['category_id'])
+        product = Product.objects.get(pk=get_product_id(product))
+        subcate = product.category.subcategory_name
     except Exception:
         pass
     return subcate
 
 
 @register.filter
-def get_quantity(product, order_id):
+def get_quantity(product):
     quantity = 0
     try:
-        product_id = product['product_id']
-        quantity = Product_Order.objects.filter(order_id=order_id).get(product_id=product_id).quantity
+        quantity = product['quantity']
     except Exception:
         pass
     return quantity
@@ -52,10 +55,11 @@ def get_quantity(product, order_id):
 
 @register.filter
 def get_product_discount(product):
-    return product['discount']
+    product = Product.objects.get(pk=get_product_id(product))
+    return product.discount
 
 
 @register.filter
-def get_total_price(product, order_id):
+def get_total_price(product):
     return (get_product_price(product) - (
-                get_product_price(product) * (get_product_discount(product) / 100))) * get_quantity(product, order_id)
+                int(get_product_price(product)) * (get_product_discount(product) / 100))) * get_quantity(product)
