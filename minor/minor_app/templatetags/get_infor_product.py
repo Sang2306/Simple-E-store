@@ -25,8 +25,8 @@ def get_product_price(product):
 def get_product_category(product):
     category = ""
     try:
-        category_id = Product.objects.get(pk=get_product_id(product)).category_id
-        category = Category.objects.get(p=category_id).category_name
+        product = Product.objects.get(pk=get_product_id(product))
+        category = Category.objects.get(pk=product.category.category_id).category_name
     except Exception:
         pass
     return category
