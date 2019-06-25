@@ -11,45 +11,73 @@
 <!--Table show all product in a database-->
 <table class="table table-dark">
     <thead>
-    <tr>
-        <th scope="col">#</th>
-        <th scope="col">ID sản phẩm</th>
-        <th scope="col">Tên sản phẩm</th>
-        <th scope="col">Giá($)</th>
-        <th scope="col">Giảm giá(%)</th>
-        <th scope="col">Danh mục</th>
-        <th scope="col">Loại</th>
-    </tr>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">ID sản phẩm</th>
+            <th scope="col">Tên sản phẩm</th>
+            <th scope="col">Giá($)</th>
+            <th scope="col">Giảm giá(%)</th>
+            <th scope="col">Danh mục</th>
+            <th scope="col">Loại</th>
+        </tr>
     </thead>
     <tbody>
-    {% for product in products %}
-    <tr>
-        <th scope="row">{{ forloop.counter }}</th>
-        <td>{{ product.product_id }}</td>
-        <td>{{ product.product_name }}</td>
-        <td>{{ product.price }}</td>
-        <td>{{ product.discount }}</td>
-        <td>{{ product.category.category }}</td>
-        <td>{{ product.category }}</td>
-        <td>
-            <!--Deep-orange-->
-            <button type="button" class="btn btn-deep-orange"><i class="fas fa-cart-plus"></i>
-                Thêm vào giỏ hàng
-            </button>
-            <!-- Button trigger modal -->
-            <!-- <button type="button" value="{{ product.product_id }}" onclick="buy(this.value)"
-                    class="btn btn-warning" data-toggle="modal" data-target="#fill-info">
-                Đặt hàng
-            </button> -->
-        </td>
-    </tr>
-    {% endfor %}
+        {% for product in products %}
+        <tr>
+            <th scope="row">{{ forloop.counter }}</th>
+            <td>{{ product.product_id }}</td>
+            <td>{{ product.product_name }}</td>
+            <td>{{ product.price }}</td>
+            <td>{{ product.discount }}</td>
+            <td>{{ product.category.category }}</td>
+            <td>{{ product.category }}</td>
+            <td>
+                <button type="button" id="addToCartBtn" onclick="addToCart(this.value)" value="{{ product.product_id }}"
+                    class="btn btn-deep-orange" data-toggle="modal" data-target="#cart"><i class="fas fa-cart-plus"></i>
+                    Thêm vào giỏ hàng
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
     </tbody>
 </table>
 
-<!-- Modal -->
-<div class="modal fade" id="fill-info" tabindex="-1" role="dialog" aria-labelledby="orderModal"
-     aria-hidden="true">
+<!-- Cart -->
+<div class="modal fade right" id="cart" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-right" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title w-100" id="myModalLabel">Giỏ hàng</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h4 style="font-size: 20px; text-align: center;">SẢN PHẨM</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Mã sản phẩm</th>
+                            <th scope="col">Số lượng</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody">
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#fill-info">
+                    Thanh toán
+                </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tiếp tục mua</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fill information modal -->
+<div class="modal fade right" id="fill-info" tabindex="-1" role="dialog" aria-labelledby="orderModal"
+    aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -61,34 +89,26 @@
             <div class="modal-body">
                 <form action="{% url 'minor_app:ordered' %}" method="POST">
                     {% csrf_token %}
-                    <!-- Product -->
-                    <h4 style="font-size: 20px; text-align: center;">SẢN PHẨM</h4>
-                    <br>
-                    <label for="#product">Mã sản phẩm</label>
-                    <input type="text" name="product_id" id="product" class="form-control"
-                           aria-describedby="inputGroupMaterial-sizing-default" readonly>
-                    <hr>
-                    <label for="#quantity">Số lượng: <span id="changeQuantity">1</span></label>
-                    <input type="range" min="1" id="quantity" name="quantity" value="1"
-                           oninput="sliderChange(this.value)" class="form-control" required>
+                    <div class="hiddenProductId" hidden></div>
+                    <div class="hiddenProductQuan" hidden></div>
                     <!-- Customer -->
-                    <hr>
                     <h4 style="font-size: 20px; text-align: center">KHÁCH HÀNG</h4>
                     <div class="md-form input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text md-addon"
-                                  id="inputGroupMaterial-sizing-default"> Họ và tên </span>
+                            <span class="input-group-text md-addon" id="inputGroupMaterial-sizing-default"> Họ và tên
+                            </span>
                         </div>
                         <input type="text" name="customer_name" class="form-control" aria-label="Sizing example input"
-                               aria-describedby="inputGroupMaterial-sizing-default" required>
+                            aria-describedby="inputGroupMaterial-sizing-default" required>
                     </div>
 
                     <div class="md-form input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text md-addon" id="inputGroupMaterial-sizing-default"> Số điện thoại </span>
+                            <span class="input-group-text md-addon" id="inputGroupMaterial-sizing-default"> Số điện
+                                thoại </span>
                         </div>
                         <input type="number" name="number_phone" class="form-control"
-                               aria-describedby="inputGroupMaterial-sizing-default">
+                            aria-describedby="inputGroupMaterial-sizing-default">
                     </div>
                     <label for="#nation"> Quốc gia </label>
                     <select class="browser-default custom-select" id="nation" name="country_pk" required>
@@ -134,71 +154,118 @@
 
 {% block more_script %}
 <script>
-        function sliderChange(value){
-            document.getElementById('changeQuantity').textContent = value;
+    var productIdList = []
+    var index = 0;
+    function addToCart(product_id) {
+        // preprocessCookie();
+        $('#cartBody').html("");
+        productIdList[index] = product_id;
+        // $('#product').val(product_id);
+        var replaceData = "";
+        var productID = "", productQuan = "";
+        for(let product_id in productIdList){
+            index = product_id;
+            replaceData += '   <tr>  ' +
+            '                               <td> ' +  productIdList[index] + ' </td> ' +
+            '                               <td>  ' +
+            '                                   <div class="btn-group" role="group">  ' +
+            '                                       <button type="button" id="minusBtn' + index + '" onclick="minusBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-minus"></i></button>  ' +
+            '                                       <input style="width: 30%" readonly type="text" class="btn btn-sm" value="1" id="quantityInput' + index + '"/>  ' +
+            '                                       <button type="button" id="addBtn' + index + '" onclick="addBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-plus"></i></button>  ' +
+            '                                   </div>  ' +
+            '                               </td>  ' +
+            '                  </tr>  ';
+             
+            productID += '<input type="text" name="productIds" id="product" ' + 'value="' + productIdList[index] + '"' +
+            '                                   aria-describedby="inputGroupMaterial-sizing-default">  ';
+            productQuan += '<input style="width: 30%" type="text" class="btn btn-sm" value="1" name="quantitys" id="quantityInput' + index + '"/>  ';
         }
+        $('.hiddenProductId').html(productID);
+        $('.hiddenProductQuan').html(productQuan);
+        $('#cartBody').html(replaceData);
+        index++;       
 
-        function buy(product_id){
-            document.getElementById('product').value = product_id;
+    }
+
+    function addBtnHandler(indexValue){
+        let quantity = parseInt($('#quantityInput' + indexValue).val(), 10);
+        quantity += 1;
+        $('#quantityInput' + indexValue).val(quantity);
+        $('.hiddenProductQuan #quantityInput' + + indexValue).val(quantity);
+        if (quantity >= 12) {
+            $('#addBtn'+indexValue).attr('disabled', true);
         }
+        $('#minusBtn'+indexValue).attr('disabled', false);
+    }
 
-        // ajax request for states in each nation
-        $('#nation').change(function(){
-            var country_pk = $('#nation').val();
-            $.ajax({
-                url: "{% url 'minor_app:load_states' %}",
-                method: 'GET',
-                data: {
-                    'country_pk': country_pk,
-                },
-                dataType: 'json',
-                success: function(data){
-                    str_option = "";
-                    if (data['length'] == 0){
-                        $('#states').html("");
-                        return;
-                    }
-                    for (let index = 0; index < data['length']; index++) {
-                        str_option += "<option value='" + String(data['result'][index]['id']) + "'>" + String(data['result'][index]['state_name']) + "</option>";
-                        $('#states').html(str_option);
-                    }
-                },
-            });
-        });
-        // ajax request for cities in each state
-        $('#states').change(function(){
-            var state_id = $('#states').val();
-            $('#cities').html("");
-            $.ajax({
-                url: "{% url 'minor_app:load_cities' %}",
-                method: 'GET',
-                data:{
-                    'state_id': state_id,
-                },
-                dataType:'json',
-                success: function(data){
-                    $.each(data['cities'], function(index, value){
-                        $('#cities').append("<option value='" + String(value['id']) + "'>" + String(value['city_name']) + "</option>")
-                    });
-                }
-            });
-        });
-        // request change delivery date from ship mode
-        $('#ship-mode').change(function(){
-            var ship_mode = $(this).val();
-            $('#delivery-date').html("");
-            $.ajax({
-                url: "{% url 'minor_app:load_delivery_date' %}",
-                method: 'GET',
-                data:{
-                    'ship_mode': ship_mode
-                },
-                dataType: 'json',
-                success: function(data){
-                    $('#delivery-date').val(data['delivery_date']);
-                }
-            });
-        });
+    function minusBtnHandler(indexValue){
+        let quantity = parseInt($('#quantityInput' + indexValue).val(), 10);
+        quantity -= 1;
+        $('#quantityInput' + indexValue).val(quantity);
+        $('.hiddenProductQuan #quantityInput' + + indexValue).val(quantity);
+        if (quantity == 0) {
+            $('#minusBtn'+indexValue).attr('disabled', true);
+        }
+        $('#addBtn'+indexValue).attr('disabled', false);
+    }
 
+    // ajax request for states in each nation
+    $('#nation').change(function () {
+        var country_pk = $('#nation').val();
+        $.ajax({
+            url: "{% url 'minor_app:load_states' %}",
+            method: 'GET',
+            data: {
+                'country_pk': country_pk,
+            },
+            dataType: 'json',
+            success: function (data) {
+                str_option = "";
+                if (data['length'] == 0) {
+                    $('#states').html("");
+                    return;
+                }
+                for (let index = 0; index < data['length']; index++) {
+                    str_option += "<option value='" + String(data['result'][index]['id']) + "'>" + String(data['result'][index]['state_name']) + "</option>";
+                    $('#states').html(str_option);
+                }
+            },
+        });
+    });
+
+    // ajax request for cities in each state
+    $('#states').change(function () {
+        var state_id = $('#states').val();
+        $('#cities').html("");
+        $.ajax({
+            url: "{% url 'minor_app:load_cities' %}",
+            method: 'GET',
+            data: {
+                'state_id': state_id,
+            },
+            dataType: 'json',
+            success: function (data) {
+                $.each(data['cities'], function (index, value) {
+                    $('#cities').append("<option value='" + String(value['id']) + "'>" + String(value['city_name']) + "</option>")
+                });
+            }
+        });
+    });
+    // request change delivery date from ship mode
+    $('#ship-mode').change(function () {
+        var ship_mode = $(this).val();
+        $('#delivery-date').html("");
+        $.ajax({
+            url: "{% url 'minor_app:load_delivery_date' %}",
+            method: 'GET',
+            data: {
+                'ship_mode': ship_mode
+            },
+            dataType: 'json',
+            success: function (data) {
+                $('#delivery-date').val(data['delivery_date']);
+            }
+        });
+    });
 </script>
 {% endblock more_script %}

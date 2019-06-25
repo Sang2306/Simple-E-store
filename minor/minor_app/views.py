@@ -72,7 +72,6 @@ def order(request):
         user id duoc tinh khi client gui request bang ajax VN-thoigianhientaicuahethong
 
     """
-
     ship_form = ShipForm()
 
     countries = Country.objects.all()
@@ -83,8 +82,8 @@ def order(request):
 
     context = {
         'products': products,
-        'countries': countries,
         'segments': segments,
+        'countries': countries,
         'ship_form': ship_form,
     }
     return render(request, 'minor_app/order.html', context=context)
@@ -126,20 +125,28 @@ def ordered(request):
             ship=ship,
         )
 
-        product_id = request.POST['product_id']
+        productIDs = request.POST.getlist('productIds')
+        productQuan = request.POST.getlist('quantitys')
 
-        order.product.set(Product.objects.filter(pk=product_id))
+        print("*"*40)
+        print(productIDs)
+        print("*"*40)
+        print("*"*40)
+        print(productQuan)
+        print("*"*40)
 
-        quantity = request.POST['quantity']
+        for product_id, quantity in zip(productIDs, productQuan):
+            product = Product.objects.filter(pk=product_id)
+            order.product.set(product)
+            Product_Order.objects.create(
+                order=order,
+                product_id=product_id,
+                quantity=quantity
+            )
+            print(product_id, '\t', quantity)
 
-        Product_Order.objects.create(
-            order=order,
-            product_id=product_id,
-            quantity=quantity
-        )
-
-    return HttpResponseRedirect(reverse_lazy('minor_app:order'))
-
+    return HttpResponseRedirect(reverse_lazy('minor_app:index'))
+    
 
 def load_states(request):
     country_pk = request.GET['country_pk']
