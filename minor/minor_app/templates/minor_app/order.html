@@ -90,7 +90,7 @@
                 <form action="{% url 'minor_app:ordered' %}" method="POST">
                     {% csrf_token %}
                     <div class="hiddenProductId" hidden></div>
-                    <div class="hiddenProductQuan" hidden></div>
+                    <div class="hiddenproduct_quantity_string" hidden></div>
                     <!-- Customer -->
                     <h4 style="font-size: 20px; text-align: center">KHÁCH HÀNG</h4>
                     <div class="md-form input-group mb-3">
@@ -154,19 +154,53 @@
 
 {% block more_script %}
 <script>
-    var productIdList = []
+    var productIDArray = [];
+    var productQuantityArray = [];
     var index = 0;
     function addToCart(product_id) {
-        // preprocessCookie();
         $('#cartBody').html("");
-        productIdList[index] = product_id;
-        // $('#product').val(product_id);
-        var replaceData = "";
-        var productID = "", productQuan = "";
-        for(let product_id in productIdList){
-            index = product_id;
-            replaceData += '   <tr>  ' +
-            '                               <td> ' +  productIdList[index] + ' </td> ' +
+        var cookieObject = processCookies(document.cookie);
+        var cookieObjectLength = Object.keys(cookieObject).length;
+        // kiem tra id moi co nam tong cookie chua neu co tang gia tri len mot
+        // nguoc lai them moi 
+        let isAdd = false
+        if(product_id in cookieObject){
+            cookieObject[ product_id ] = String(parseInt(cookieObject[product_id])+1);
+        }else{
+            productIDArray[ cookieObjectLength ] = product_id;
+            productQuantityArray[ cookieObjectLength ] = "1";
+            isAdd = true;
+        }
+
+        console.log(productIDArray)
+        console.log(productQuantityArray)
+
+        for(let index = 0; index < cookieObjectLength; index++){
+            productIDArray[index] = Object.keys(cookieObject)[index];
+            productQuantityArray[index] = cookieObject[ productIDArray[index] ];//["2", "5"]
+        }
+        sendToServer();
+        let replaceData = "", productID = "", product_quantity_string = "";
+        cookieObjectLength = isAdd==true ? cookieObjectLength : cookieObjectLength - 1;
+        for(let index = 0; index <= cookieObjectLength; index++){
+            productID += '<input type="text" name="productIds" id="product" ' + 'value="' + productIDArray[index] + '"' +
+            '                                   aria-describedby="inputGroupMaterial-sizing-default">  ';
+            if(productIDArray[index] in cookieObject){
+                product_quantity_string += '<input style="width: 30%" type="text" class="btn btn-sm" value="'+ cookieObject[productIDArray[index]] + '" name="quantitys" id="quantityInput' + index + '"/>  ';
+                replaceData += '   <tr>  ' +
+            '                               <td> ' +  productIDArray[index] + ' </td> ' +
+            '                               <td>  ' +
+            '                                   <div class="btn-group" role="group">  ' +
+            '                                       <button type="button" id="minusBtn' + index + '" onclick="minusBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-minus"></i></button>  ' +
+            '                                       <input style="width: 30%" readonly type="text" class="btn btn-sm" value="'+ cookieObject[productIDArray[index]] + '" id="quantityInput' + index + '"/>  ' +
+            '                                       <button type="button" id="addBtn' + index + '" onclick="addBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-plus"></i></button>  ' +
+            '                                   </div>  ' +
+            '                               </td>  ' +
+            '                  </tr>  ';
+            }else{
+                product_quantity_string += '<input style="width: 30%" type="text" class="btn btn-sm" value="1" name="quantitys" id="quantityInput' + index + '"/>  ';
+                replaceData += '   <tr>  ' +
+            '                               <td> ' +  productIDArray[index] + ' </td> ' +
             '                               <td>  ' +
             '                                   <div class="btn-group" role="group">  ' +
             '                                       <button type="button" id="minusBtn' + index + '" onclick="minusBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-minus"></i></button>  ' +
@@ -175,38 +209,67 @@
             '                                   </div>  ' +
             '                               </td>  ' +
             '                  </tr>  ';
-             
-            productID += '<input type="text" name="productIds" id="product" ' + 'value="' + productIdList[index] + '"' +
-            '                                   aria-describedby="inputGroupMaterial-sizing-default">  ';
-            productQuan += '<input style="width: 30%" type="text" class="btn btn-sm" value="1" name="quantitys" id="quantityInput' + index + '"/>  ';
+            }
+            
         }
         $('.hiddenProductId').html(productID);
-        $('.hiddenProductQuan').html(productQuan);
+        $('.hiddenproduct_quantity_string').html(product_quantity_string);
         $('#cartBody').html(replaceData);
-        index++;       
-
     }
 
     function addBtnHandler(indexValue){
         let quantity = parseInt($('#quantityInput' + indexValue).val(), 10);
         quantity += 1;
         $('#quantityInput' + indexValue).val(quantity);
-        $('.hiddenProductQuan #quantityInput' + + indexValue).val(quantity);
+        $('.hiddenproduct_quantity_string #quantityInput' + indexValue).val(quantity);
         if (quantity >= 12) {
             $('#addBtn'+indexValue).attr('disabled', true);
         }
         $('#minusBtn'+indexValue).attr('disabled', false);
+        
+        productQuantityArray[indexValue] = String(quantity);
+        sendToServer();     
     }
 
     function minusBtnHandler(indexValue){
         let quantity = parseInt($('#quantityInput' + indexValue).val(), 10);
         quantity -= 1;
         $('#quantityInput' + indexValue).val(quantity);
-        $('.hiddenProductQuan #quantityInput' + + indexValue).val(quantity);
+        $('.hiddenproduct_quantity_string #quantityInput' + indexValue).val(quantity);
         if (quantity == 0) {
             $('#minusBtn'+indexValue).attr('disabled', true);
         }
         $('#addBtn'+indexValue).attr('disabled', false);
+
+        productQuantityArray[indexValue] = String(quantity);
+        sendToServer();
+    }
+
+    function sendToServer(){
+        $.ajax({
+            url: "{% url 'minor_app:setup_cookie' %}",
+            method: 'GET',
+            data:{
+                'productIDArray': JSON.stringify(productIDArray),
+                'productQuantityArray': JSON.stringify(productQuantityArray)
+            },
+            success: function(data){
+                alert('Thanh cong');
+            }
+        });
+    }
+
+    // pre-process cookie to json
+    function processCookies(cookie){
+        cookieList = cookie.split(';');
+        let cookieObject = {}
+        for(let index = 1; index < cookieList.length; index++){
+            // "FUR-CH-10000454", "2"
+            let splitedPair = cookieList[index].slice(1).split('=');
+            cookieObject[splitedPair[0]] = splitedPair[1];
+            
+        }
+		return cookieObject;
     }
 
     // ajax request for states in each nation

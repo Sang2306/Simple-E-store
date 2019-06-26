@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.http.response import JsonResponse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
 from django.db import IntegrityError
 from django.utils import timezone
@@ -128,13 +128,6 @@ def ordered(request):
         productIDs = request.POST.getlist('productIds')
         productQuan = request.POST.getlist('quantitys')
 
-        print("*"*40)
-        print(productIDs)
-        print("*"*40)
-        print("*"*40)
-        print(productQuan)
-        print("*"*40)
-
         for product_id, quantity in zip(productIDs, productQuan):
             product = Product.objects.filter(pk=product_id)
             order.product.set(product)
@@ -191,3 +184,23 @@ def load_delivery_date(request):
     }
 
     return JsonResponse(data=data)
+
+def setup_cookie(request):
+    productIDArray = request.GET.get('productIDArray')
+    productQuantityArray = request.GET.get('productQuantityArray')
+
+    productIDArray = get_list_from_string(productIDArray)
+    productQuantityArray = get_list_from_string(productQuantityArray)
+
+
+    response = HttpResponse("")
+    
+    for pro, quantity in zip(productIDArray, productQuantityArray):
+        #create cookies and sen back to browser to keep track of customer's data
+        response.set_cookie(pro, quantity, 24*60*60) #cookie expire after 1 day
+
+    return response
+
+def get_list_from_string(string_list): 
+    new_list_of_string = string_list.split('"') 
+    return [new_list_of_string[elem] for elem in range(1, len(new_list_of_string), 2)] 
