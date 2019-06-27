@@ -157,13 +157,15 @@
     var productIDArray = [];
     var productQuantityArray = [];
     var index = 0;
+    var cookieObject = processCookies(document.cookie);
+    var cookieObjectLength = Object.keys(cookieObject).length;
     function addToCart(product_id) {
         $('#cartBody').html("");
-        var cookieObject = processCookies(document.cookie);
-        var cookieObjectLength = Object.keys(cookieObject).length;
+        cookieObject = processCookies(document.cookie);
+        cookieObjectLength = Object.keys(cookieObject).length;
         // kiem tra id moi co nam tong cookie chua neu co tang gia tri len mot
         // nguoc lai them moi 
-        let isAdd = false
+        let isAdd = false;
         if(product_id in cookieObject){
             cookieObject[ product_id ] = String(parseInt(cookieObject[product_id])+1);
         }else{
@@ -179,9 +181,9 @@
             productIDArray[index] = Object.keys(cookieObject)[index];
             productQuantityArray[index] = cookieObject[ productIDArray[index] ];//["2", "5"]
         }
+        cookieObjectLength = isAdd==true ? cookieObjectLength : cookieObjectLength - 1;
         sendToServer();
         let replaceData = "", productID = "", product_quantity_string = "";
-        cookieObjectLength = isAdd==true ? cookieObjectLength : cookieObjectLength - 1;
         for(let index = 0; index <= cookieObjectLength; index++){
             productID += '<input type="text" name="productIds" id="product" ' + 'value="' + productIDArray[index] + '"' +
             '                                   aria-describedby="inputGroupMaterial-sizing-default">  ';
@@ -253,9 +255,6 @@
                 'productIDArray': JSON.stringify(productIDArray),
                 'productQuantityArray': JSON.stringify(productQuantityArray)
             },
-            success: function(data){
-                alert('Thanh cong');
-            }
         });
     }
 
