@@ -51,7 +51,7 @@
                     <!--   order.product.values  return a set of order's products     -->
                 {% for product in order.product_order_set.values %}
                     <tr>
-                        <th scope="row">{{ forloop.counter }}</th>
+                        <th scope="row"></th>
                         <td>{{ order.id }}</td>
                         <td>{{ order }}</td>
                         <td>{{ order.ship }}</td>
@@ -83,3 +83,13 @@
     </table>
 </div>
 {% endblock content %}
+
+{% block more_script %}
+<script>
+    var all = $('th[scope=row]');
+    var index = 1;
+    for(let th of all){
+        th.textContent = index++;
+    }
+</script>
+{% endblock more_script %}

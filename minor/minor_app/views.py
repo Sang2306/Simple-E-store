@@ -185,12 +185,40 @@ def load_delivery_date(request):
 
     return JsonResponse(data=data)
 
+
+def save_to_session(request):
+    pro_id, quantity = [], []
+    productIDArray = request.GET.get('productIDArray')
+    productQuantityArray = request.GET.get('productQuantityArray')
+    if len(productIDArray)==0:
+        pass
+    else:
+        productIDArray = getlistfromJSONString( productIDArray )
+        productQuantityArray = getlistfromJSONString( productQuantityArray )
+        for pro, quan in zip( productIDArray, productQuantityArray ):
+            if quan=="0":
+                del request.session[pro]
+            else:
+                request.session[pro] = quan
+
+    for pro, quan in list(request.session.items()):
+        pro_id.append(pro)
+        quantity.append(quan)
+        
+    data = {
+        'productID': pro_id,
+        'quantity': quantity,
+    }
+    return JsonResponse(data=data)
+
+
+
 def setup_cookie(request):
     productIDArray = request.GET.get('productIDArray')
     productQuantityArray = request.GET.get('productQuantityArray')
 
-    productIDArray = get_list_from_string(productIDArray)
-    productQuantityArray = get_list_from_string(productQuantityArray)
+    productIDArray = getlistfromJSONString(productIDArray)
+    productQuantityArray = getlistfromJSONString(productQuantityArray)
 
 
     response = HttpResponse("")
@@ -201,6 +229,6 @@ def setup_cookie(request):
 
     return response
 
-def get_list_from_string(string_list): 
+def getlistfromJSONString(string_list): 
     new_list_of_string = string_list.split('"') 
     return [new_list_of_string[elem] for elem in range(1, len(new_list_of_string), 2)] 

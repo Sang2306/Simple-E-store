@@ -90,7 +90,7 @@
                 <form action="{% url 'minor_app:ordered' %}" method="POST">
                     {% csrf_token %}
                     <div class="hiddenProductId" hidden></div>
-                    <div class="hiddenproduct_quantity_string" hidden></div>
+                    <div class="hiddenQuantity" hidden></div>
                     <!-- Customer -->
                     <h4 style="font-size: 20px; text-align: center">KHÁCH HÀNG</h4>
                     <div class="md-form input-group mb-3">
@@ -156,119 +156,93 @@
 <script>
     var productIDArray = [];
     var productQuantityArray = [];
-    var index = 0;
-    var cookieObject = processCookies(document.cookie);
-    var cookieObjectLength = Object.keys(cookieObject).length;
-    function addToCart(product_id) {
-        $('#cartBody').html("");
-        cookieObject = processCookies(document.cookie);
-        cookieObjectLength = Object.keys(cookieObject).length;
-        // kiem tra id moi co nam tong cookie chua neu co tang gia tri len mot
-        // nguoc lai them moi 
-        let isAdd = false;
-        if(product_id in cookieObject){
-            cookieObject[ product_id ] = String(parseInt(cookieObject[product_id])+1);
-        }else{
-            productIDArray[ cookieObjectLength ] = product_id;
-            productQuantityArray[ cookieObjectLength ] = "1";
-            isAdd = true;
-        }
-
-        console.log(productIDArray)
-        console.log(productQuantityArray)
-
-        for(let index = 0; index < cookieObjectLength; index++){
-            productIDArray[index] = Object.keys(cookieObject)[index];
-            productQuantityArray[index] = cookieObject[ productIDArray[index] ];//["2", "5"]
-        }
-        cookieObjectLength = isAdd==true ? cookieObjectLength : cookieObjectLength - 1;
-        sendToServer();
-        let replaceData = "", productID = "", product_quantity_string = "";
-        for(let index = 0; index <= cookieObjectLength; index++){
-            productID += '<input type="text" name="productIds" id="product" ' + 'value="' + productIDArray[index] + '"' +
-            '                                   aria-describedby="inputGroupMaterial-sizing-default">  ';
-            if(productIDArray[index] in cookieObject){
-                product_quantity_string += '<input style="width: 30%" type="text" class="btn btn-sm" value="'+ cookieObject[productIDArray[index]] + '" name="quantitys" id="quantityInput' + index + '"/>  ';
-                replaceData += '   <tr>  ' +
-            '                               <td> ' +  productIDArray[index] + ' </td> ' +
-            '                               <td>  ' +
-            '                                   <div class="btn-group" role="group">  ' +
-            '                                       <button type="button" id="minusBtn' + index + '" onclick="minusBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-minus"></i></button>  ' +
-            '                                       <input style="width: 30%" readonly type="text" class="btn btn-sm" value="'+ cookieObject[productIDArray[index]] + '" id="quantityInput' + index + '"/>  ' +
-            '                                       <button type="button" id="addBtn' + index + '" onclick="addBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-plus"></i></button>  ' +
-            '                                   </div>  ' +
-            '                               </td>  ' +
-            '                  </tr>  ';
-            }else{
-                product_quantity_string += '<input style="width: 30%" type="text" class="btn btn-sm" value="1" name="quantitys" id="quantityInput' + index + '"/>  ';
-                replaceData += '   <tr>  ' +
-            '                               <td> ' +  productIDArray[index] + ' </td> ' +
-            '                               <td>  ' +
-            '                                   <div class="btn-group" role="group">  ' +
-            '                                       <button type="button" id="minusBtn' + index + '" onclick="minusBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-minus"></i></button>  ' +
-            '                                       <input style="width: 30%" readonly type="text" class="btn btn-sm" value="1" id="quantityInput' + index + '"/>  ' +
-            '                                       <button type="button" id="addBtn' + index + '" onclick="addBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-plus"></i></button>  ' +
-            '                                   </div>  ' +
-            '                               </td>  ' +
-            '                  </tr>  ';
-            }
-            
-        }
-        $('.hiddenProductId').html(productID);
-        $('.hiddenproduct_quantity_string').html(product_quantity_string);
-        $('#cartBody').html(replaceData);
-    }
+    refreshDataFromServer();
 
     function addBtnHandler(indexValue){
         let quantity = parseInt($('#quantityInput' + indexValue).val(), 10);
         quantity += 1;
         $('#quantityInput' + indexValue).val(quantity);
-        $('.hiddenproduct_quantity_string #quantityInput' + indexValue).val(quantity);
+        $('.hiddenQuantity #quantityInput' + indexValue).val(quantity);
         if (quantity >= 12) {
             $('#addBtn'+indexValue).attr('disabled', true);
         }
         $('#minusBtn'+indexValue).attr('disabled', false);
-        
         productQuantityArray[indexValue] = String(quantity);
-        sendToServer();     
+        refreshDataFromServer();     
     }
 
     function minusBtnHandler(indexValue){
         let quantity = parseInt($('#quantityInput' + indexValue).val(), 10);
         quantity -= 1;
         $('#quantityInput' + indexValue).val(quantity);
-        $('.hiddenproduct_quantity_string #quantityInput' + indexValue).val(quantity);
+        $('.hiddenQuantity #quantityInput' + indexValue).val(quantity);
         if (quantity == 0) {
             $('#minusBtn'+indexValue).attr('disabled', true);
         }
         $('#addBtn'+indexValue).attr('disabled', false);
 
         productQuantityArray[indexValue] = String(quantity);
-        sendToServer();
+        refreshDataFromServer();
     }
 
-    function sendToServer(){
+    function addAnItemToCart(product_id, quantity="1"){
+        let index = productIDArray.findIndex(function(id){
+            return id === product_id;
+        });
+        //neu chua tim thay
+        if (index === -1){
+            productIDArray[ productIDArray.length ] = product_id;
+            productQuantityArray[ productQuantityArray.length ] = quantity;
+        }else{
+            productQuantityArray[index] = String(parseInt(productQuantityArray[index]) + 1);
+        }
+    }
+
+    function addToCart(product_id) {
+        $('#cartBody').html("");
+        addAnItemToCart(product_id);
+        refreshDataFromServer();
+        let size = productIDArray.length;
+        let items = "", products_id = "", products_quan = "";
+        for(let index = 0; index < size; index++){
+            products_id += '<input type="text" name="productIds" id="product" ' + 'value="' + productIDArray[index] + '"' +
+            '                                   aria-describedby="inputGroupMaterial-sizing-default">  ';
+            products_quan += '<input style="width: 30%" type="text" class="btn btn-sm" value="0" name="quantitys" id="quantityInput' + index + '"/>  ';
+            items += '   <tr>  ' +
+            '                               <td> ' +  productIDArray[index] + ' </td> ' +
+            '                               <td>  ' +
+            '                                   <div class="btn-group" role="group">  ' +
+            '                                       <button type="button" id="minusBtn' + index + '" onclick="minusBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-minus"></i></button>  ' +
+            '                                       <input style="width: 30%" readonly type="text" class="btn btn-sm" value="' + productQuantityArray[index] + '" id="quantityInput' + index + '"/>  ' +
+            '                                       <button type="button" id="addBtn' + index + '" onclick="addBtnHandler(this.value)" class="btn btn-sm" value="' + index + '"><i class="fas fa-plus"></i></button>  ' +
+            '                                   </div>  ' +
+            '                               </td>  ' +
+            '                  </tr>  ';
+        }
+        $('.hiddenProductId').html(products_id);
+        $('.hiddenQuantity').html(products_quan);
+        $('#cartBody').html(items);
+    }
+
+    function refreshDataFromServer(){
         $.ajax({
-            url: "{% url 'minor_app:setup_cookie' %}",
+            url: "{% url 'minor_app:save_to_session' %}",
             method: 'GET',
             data:{
                 'productIDArray': JSON.stringify(productIDArray),
                 'productQuantityArray': JSON.stringify(productQuantityArray)
             },
+            success: function(data){
+                productIDArray = [];
+                productQuantityArray = [];
+                let size = data['productID'].length;
+                for(let i = 0; i < size; i++){
+                    addAnItemToCart(data['productID'][i], data['quantity'][i]);
+                }
+                console.log(productIDArray)
+                console.log(productQuantityArray)
+            }
         });
-    }
-
-    // pre-process cookie to json
-    function processCookies(cookie){
-        cookieList = cookie.split(';');
-        let cookieObject = {}
-        for(let index = 1; index < cookieList.length; index++){
-            // "FUR-CH-10000454", "2"
-            let splitedPair = cookieList[index].slice(1).split('=');
-            cookieObject[splitedPair[0]] = splitedPair[1];
-            
-        }
-		return cookieObject;
     }
 
     // ajax request for states in each nation
@@ -294,7 +268,6 @@
             },
         });
     });
-
     // ajax request for cities in each state
     $('#states').change(function () {
         var state_id = $('#states').val();

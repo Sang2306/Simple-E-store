@@ -11,7 +11,10 @@ urlpatterns = [
     path('order/ordered/', views.ordered, name='ordered'),
     path('order/load_states/', views.load_states, name='load_states'),
     path('order/load_cities/', views.load_cities, name='load_cities'),
-    path('order/load_delivery_date/', views.load_delivery_date, name='load_delivery_date'),
+    path('order/load_delivery_date/',
+         views.load_delivery_date, name='load_delivery_date'),
     path('order/setup_cookie/', views.setup_cookie, name='setup_cookie'),
-    path('product/load_sub_categories/', views.load_sub_categories, name='load_sub_categories'),
+    path('order/save_to_session/', views.save_to_session, name='save_to_session'),
+    path('product/load_sub_categories/',
+         views.load_sub_categories, name='load_sub_categories'),
 ]
