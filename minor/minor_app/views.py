@@ -201,17 +201,25 @@ def save_to_session(request):
             else:
                 request.session[pro] = quan
 
-    for pro, quan in list(request.session.items()):
+    LIST = list(request.session.items())
+    result = map(filter_product_id, LIST)
+    LIST = []
+    for tuple_element in result:
+        if tuple_element is not None:
+            LIST.append(tuple_element)
+    for pro, quan in LIST:
         pro_id.append(pro)
         quantity.append(quan)
-        
+
     data = {
         'productID': pro_id,
         'quantity': quantity,
     }
     return JsonResponse(data=data)
 
-
+def filter_product_id(tuple_element):
+    if not tuple_element[0].startswith('_auth'):
+        return tuple_element
 
 def setup_cookie(request):
     productIDArray = request.GET.get('productIDArray')
